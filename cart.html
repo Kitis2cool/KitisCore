@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cart & Checkout — Kitis Hardware</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="index.html">Kitis Hardware</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="cart.html" class="active">Cart (<span id="cart-count">0</span>)</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>Your Cart</h1>
+
+    <div id="cart-area"></div>
+
+    <hr />
+
+    <h2>Checkout</h2>
+    <form id="checkout-form" class="checkout-form">
+      <div class="two-col">
+        <label>
+          Full name
+          <input name="fullName" required />
+        </label>
+        <label>
+          Email
+          <input name="email" type="email" required />
+        </label>
+      </div>
+
+      <label>
+        Street address
+        <input name="address" required />
+      </label>
+
+      <div class="two-col">
+        <label>
+          City
+          <input name="city" required />
+        </label>
+        <label>
+          State / Region
+          <input name="state" required />
+        </label>
+      </div>
+
+      <div class="two-col">
+        <label>
+          ZIP / Postal
+          <input name="zip" required />
+        </label>
+        <label>
+          Country
+          <input name="country" required />
+        </label>
+      </div>
+
+      <label>
+        Additional notes (e.g., preferred shipping)
+        <textarea name="notes" rows="3"></textarea>
+      </label>
+
+      <div class="checkout-actions">
+        <button type="submit" class="btn">Checkout — Email order</button>
+        <a id="mailto-fallback" class="link" style="display:none" target="_blank" rel="noopener">Open email client</a>
+      </div>
+
+      <p class="muted small">When you click Checkout, your mail client will open with a new email to <strong>kitis2cool@outlook.com</strong> containing your order and billing info.</p>
+    </form>
+  </main>
+
+  <footer class="footer">
+    <p>Kitis Hardware • Thanks for supporting makers.</p>
+  </footer>
+
+  <script src="shop.js"></script>
+  <script>
+    renderCartArea();
+    updateCartCountInNav();
+
+    const form = document.getElementById('checkout-form');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const info = {
+        fullName: fd.get('fullName') || '',
+        email: fd.get('email') || '',
+        address: fd.get('address') || '',
+        city: fd.get('city') || '',
+        state: fd.get('state') || '',
+        zip: fd.get('zip') || '',
+        country: fd.get('country') || '',
+        notes: fd.get('notes') || ''
+      };
+      const mailto = buildOrderMailto(info);
+      // try to open mailto (will open default mail client)
+      window.location.href = mailto;
+
+      // show a fallback link so the user can manually click/copy if the client didn't open
+      const fallback = document.getElementById('mailto-fallback');
+      fallback.href = mailto;
+      fallback.style.display = 'inline-block';
+      fallback.innerText = 'Open email client (fallback)';
+    });
+  </script>
+</body>
+</html>

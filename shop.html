@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shop — Kitis Hardware</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="index.html">Kitis Hardware</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="shop.html" class="active">Shop</a>
+      <a href="cart.html" id="cart-link">Cart (<span id="cart-count">0</span>)</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>Products</h1>
+    <div id="products-grid" class="grid"></div>
+  </main>
+
+  <footer class="footer">
+    <p>Kitis Hardware • Small boards, big ideas.</p>
+  </footer>
+
+  <script src="shop.js"></script>
+  <script>
+    renderProducts();        // fills the grid with placeholders
+    updateCartCountInNav();  // shows cart count in header
+  </script>
+</body>
+</html>

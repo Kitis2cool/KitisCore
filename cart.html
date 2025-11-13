@@ -3,12 +3,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cart & Checkout — Kitis Hardware</title>
+  <title>Cart & Checkout — Kitis Core</title>
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- EmailJS v4 global SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    emailjs.init("Xvv2MVCVSy5zybIfu");
+  </script>
+
 </head>
 <body>
   <header class="nav">
-    <a class="brand" href="index.html">Kitis Hardware</a>
+    <a class="brand" href="index.html">Kitis Core</a>
     <nav>
       <a href="index.html">Home</a>
       <a href="shop.html">Shop</a>
@@ -18,9 +25,7 @@
 
   <main class="container">
     <h1>Your Cart</h1>
-
     <div id="cart-area"></div>
-
     <hr />
 
     <h2>Checkout</h2>
@@ -41,74 +46,88 @@
         <input name="address" required />
       </label>
 
-      <div class="two-col">
-        <label>
-          City
-          <input name="city" required />
-        </label>
-        <label>
-          State / Region
-          <input name="state" required />
-        </label>
-      </div>
-
-      <div class="two-col">
-        <label>
-          ZIP / Postal
-          <input name="zip" required />
-        </label>
-        <label>
-          Country
-          <input name="country" required />
-        </label>
-      </div>
+      <label>
+        City
+        <input name="city" required />
+      </label>
 
       <label>
-        Additional notes (e.g., preferred shipping)
+        ZIP / Postal code
+        <input name="zip" required />
+      </label>
+
+      <label>
+        Additional notes (optional)
         <textarea name="notes" rows="3"></textarea>
       </label>
 
       <div class="checkout-actions">
-        <button type="submit" class="btn">Checkout — Email order</button>
-        <a id="mailto-fallback" class="link" style="display:none" target="_blank" rel="noopener">Open email client</a>
+        <button type="submit" class="btn">Send Order</button>
       </div>
 
-      <p class="muted small">When you click Checkout, your mail client will open with a new email to <strong>kitis2cool@outlook.com</strong> containing your order and billing info.</p>
+      <p class="muted small">
+        After clicking the button, your order will be sent automatically to <strong>kitis2cool@outlook.com</strong>.
+      </p>
+      <p style="color: rgb(255, 54, 54);">Items will take around a 1-1/2 weeks to ship and prepare for you</p>
     </form>
   </main>
 
   <footer class="footer">
-    <p>Kitis Hardware • Thanks for supporting makers.</p>
+    <p><strong>DISCLAIMER</strong> - We are not responsible for the use of these products and <strong>YOU</strong><br> are at mercy of their power and take full responsibility of the devices, use carefully!</p>
+    <p>Kitis Core • Thanks for supporting makers.</p>
   </footer>
 
   <script src="shop.js"></script>
   <script>
+    // Render cart
     renderCartArea();
     updateCartCountInNav();
 
     const form = document.getElementById('checkout-form');
     form.addEventListener('submit', function (e) {
       e.preventDefault();
+
       const fd = new FormData(form);
       const info = {
         fullName: fd.get('fullName') || '',
         email: fd.get('email') || '',
         address: fd.get('address') || '',
         city: fd.get('city') || '',
-        state: fd.get('state') || '',
         zip: fd.get('zip') || '',
-        country: fd.get('country') || '',
         notes: fd.get('notes') || ''
       };
-      const mailto = buildOrderMailto(info);
-      // try to open mailto (will open default mail client)
-      window.location.href = mailto;
 
-      // show a fallback link so the user can manually click/copy if the client didn't open
-      const fallback = document.getElementById('mailto-fallback');
-      fallback.href = mailto;
-      fallback.style.display = 'inline-block';
-      fallback.innerText = 'Open email client (fallback)';
+      // Build items string
+      const cart = getCart();
+      const itemsStr = cart.map(item => {
+        const p = PRODUCTS.find(p => p.id === item.id);
+        return `${p.name} (x${item.qty}) - $${(p.price*item.qty).toFixed(2)}`;
+      }).join('\n');
+
+      const templateParams = {
+        fullName: info.fullName,
+        email: info.email,
+        address: info.address,
+        city: info.city,
+        zip: info.zip,
+        notes: info.notes || '',
+        items: itemsStr
+      };
+
+      // Send via EmailJS
+      emailjs.send('service_3l8twp7', 'template_jfjcknj', templateParams)
+        .then(() => {
+          alert('Order sent successfully!');
+          localStorage.removeItem('kitis_cart'); // auto-clear cart
+          renderCartArea();
+          updateCartCountInNav();
+          form.reset();
+          showToast('Cart cleared!');
+        })
+        .catch(err => {
+          console.error('Failed to send order:', err);
+          alert('Failed to send order. Please try again.');
+        });
     });
   </script>
 </body>

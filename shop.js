@@ -1,49 +1,48 @@
-// Simple product + cart logic for static site.
-// Save this file as shop.js in repo root.
+// shop.js — Full product + cart + EmailJS checkout logic
 
 // ------- Product catalog (placeholders) -------
 const PRODUCTS = [
   {
-    id: 'esp32-dev',
-    name: 'ESP32 Dev Board',
-    price: 15.00,
-    desc: 'Dual-core WiFi + Bluetooth microcontroller — great for IoT.',
-    img: 'https://picsum.photos/seed/esp32/400/300'
+    id: 'M5S',
+    name: 'M5StickC plus 2',
+    price: 45.00,
+    desc: 'A small device smaller than a battery to turn on TV\'s (And More) with a click of a button',
+    img: 'https://http2.mlstatic.com/D_NQ_NP_812374-CBT82305651682_022025-O.webp'
   },
   {
-    id: 'rpi-zero',
-    name: 'Raspberry Pi Zero W',
-    price: 18.50,
-    desc: 'Tiny single-board computer for compact projects.',
-    img: 'https://picsum.photos/seed/pi/400/300'
+    id: 'BLEj',
+    name: 'Bluetooth Jammer',
+    price: 60.00,
+    desc: 'A Dual-Antenna NRF24 board with ESP-32 to disrupt bluetooth in a radius.',
+    img: 'https://camo.githubusercontent.com/eaab020038849c03f4be188040d439f74595c2b27cfc67f57ea4f2de5c8bd6c4/68747470733a2f2f64776477706c642e70616765732e6465762f4449595043422e6a7067'
   },
   {
-    id: 'nrf24-module',
-    name: 'nRF24L01+ Module',
-    price: 4.25,
-    desc: '2.4GHz radio module for short-range wireless comms.',
-    img: 'https://picsum.photos/seed/rf/400/300'
+    id: 'T-embed',
+    name: 'T-Embed CC1101 Plus',
+    price: 85.00,
+    desc: 'An \"All in one\" device simular to the Flipper zero for more than half the price',
+    img: 'https://lilygo.cc/cdn/shop/files/T-Embed-CC1101-lilygo_2.jpg?v=1727250195&width=600'
   },
   {
-    id: 'mcu-sensor-kit',
-    name: 'Micro Sensor Kit',
-    price: 9.99,
-    desc: 'Assorted sensors (temp, light, motion) for prototyping.',
+    id: 'EMP',
+    name: 'EMP (Electro Magnetic Pulse)',
+    price: 95.00,
+    desc: 'A deivce which can destroy electronics at short range (Be careful!)',
     img: 'https://picsum.photos/seed/sensors/400/300'
   },
   {
-    id: 'oled-display',
-    name: '0.96" OLED Display',
-    price: 6.50,
-    desc: 'Compact I2C OLED for small UI projects.',
-    img: 'https://picsum.photos/seed/oled/400/300'
+    id: 'Beeper-Speaker',
+    name: 'Beeper Speaker',
+    price: 6.00,
+    desc: 'A small implant to emit a beep every few minutes. (Bulk prices available)',
+    img: 'https://m.media-amazon.com/images/I/610DQu7hDuL._AC_SL1500_.jpg'
   },
   {
-    id: 'aaa-batt-holder',
-    name: 'Battery Holder (3x AAA)',
-    price: 2.75,
-    desc: 'Simple battery holder with on/off switch.',
-    img: 'https://picsum.photos/seed/batt/400/300'
+    id: 'GPTC',
+    name: 'ChatGPT calculator',
+    price: 0.00,
+    desc: 'COMING SOON',
+    img: 'https://miro.medium.com/v2/resize:fit:627/1*Xx6QzfSYLL30N4j51F292Q.jpeg'
   }
 ];
 
@@ -83,7 +82,6 @@ function removeFromCart(productId){
   const cart = getCart().filter(i => i.id !== productId);
   saveCart(cart);
 }
-
 function cartCount(){
   return getCart().reduce((s,i)=>s + (parseInt(i.qty)||0), 0);
 }
@@ -119,6 +117,7 @@ function renderProducts(){
     btn.addEventListener('click', function(){
       addToCart(this.getAttribute('data-add'));
       updateCartCountInNav();
+      renderCartArea();
     });
   });
 }
@@ -164,7 +163,7 @@ function renderCartArea(){
       <div>Subtotal</div>
       <div>$${subtotal.toFixed(2)}</div>
     </div>
-    <div class="small muted hint">Shipping will be arranged after you email your order.</div>
+    <div class="small muted hint">Shipping will be arranged after you send your order.</div>
   `;
   area.innerHTML = html;
 
@@ -204,53 +203,6 @@ function renderCartArea(){
   });
 }
 
-// ------- Order email builder -------
-function buildOrderMailto(billing){
-  const cart = getCart();
-  if(cart.length === 0){
-    alert('Your cart is empty.');
-    return '#';
-  }
-  const lines = [];
-  lines.push('Order from Kitis Hardware');
-  lines.push('---');
-  lines.push('Items:');
-  let subtotal = 0;
-  cart.forEach(item => {
-    const p = PRODUCTS.find(x=>x.id===item.id) || {name:item.id, price:0};
-    const qty = item.qty || 0;
-    const lineTotal = (p.price||0) * qty;
-    subtotal += lineTotal;
-    lines.push(`- ${p.name} (x${qty}) — $${lineTotal.toFixed(2)}`);
-  });
-  lines.push('');
-  lines.push(`Subtotal: $${subtotal.toFixed(2)}`);
-  lines.push('');
-  lines.push('Billing / Shipping info:');
-  lines.push(`Name: ${billing.fullName}`);
-  lines.push(`Email: ${billing.email}`);
-  lines.push(`Address: ${billing.address}`);
-  lines.push(`City: ${billing.city}`);
-  lines.push(`State/Region: ${billing.state}`);
-  lines.push(`ZIP: ${billing.zip}`);
-  lines.push(`Country: ${billing.country}`);
-  if(billing.notes) {
-    lines.push('');
-    lines.push('Notes:');
-    lines.push(billing.notes);
-  }
-
-  lines.push('');
-  lines.push('Please reply with payment & shipping options. Thanks!');
-
-  const subject = `Order from ${billing.fullName || 'Customer'}`;
-  const body = lines.join('\n');
-
-  const to = 'kitis2cool@outlook.com';
-  const mailto = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  return mailto;
-}
-
 // ------- Utilities -------
 function escapeHtml(s = '') {
   return String(s)
@@ -262,7 +214,6 @@ function escapeHtml(s = '') {
 }
 
 function showToast(msg){
-  // tiny ephemeral toast
   const t = document.createElement('div');
   t.textContent = msg;
   t.style.position = 'fixed';
@@ -276,4 +227,52 @@ function showToast(msg){
   t.style.boxShadow = '0 6px 18px rgba(0,0,0,0.5)';
   document.body.appendChild(t);
   setTimeout(()=> t.remove(), 1400);
+}
+
+// ------- EmailJS Checkout -------
+function setupEmailJSCheckout(formId){
+  const form = document.getElementById(formId);
+  if(!form) return;
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const fd = new FormData(form);
+    const billing = {
+      fullName: fd.get('fullName') || '',
+      email: fd.get('email') || '',
+      address: fd.get('address') || '',
+      city: fd.get('city') || '',
+      zip: fd.get('zip') || '',
+      notes: fd.get('notes') || ''
+    };
+
+    // Prepare cart items string
+    const itemsStr = getCart().map(item => {
+      const p = PRODUCTS.find(x => x.id === item.id) || { name: item.id, price: 0 };
+      return `${p.name} (x${item.qty}) - $${(p.price * item.qty).toFixed(2)}`;
+    }).join('\n');
+
+    const templateParams = {
+      fullName: billing.fullName,
+      email: billing.email,
+      address: billing.address,
+      city: billing.city,
+      zip: billing.zip,
+      notes: billing.notes,
+      items: itemsStr
+    };
+
+    emailjs.send('YOUR_SERVICE_ID','YOUR_TEMPLATE_ID', templateParams)
+      .then(function(response){
+        alert('Order sent successfully!');
+        localStorage.removeItem('kitis_cart'); // auto-clear
+        renderCartArea();
+        updateCartCountInNav();
+        form.reset();
+        showToast('Cart cleared!');
+      }, function(error){
+        console.error('Failed to send order:', error);
+        alert('Failed to send order. Please try again.');
+      });
+  });
 }
